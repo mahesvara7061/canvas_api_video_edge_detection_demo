@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Video Edge Detection</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* Thêm hình nền ở đây, bạn có thể thay đổi URL bằng hình ảnh bạn thích */
+            background: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop') no-repeat center center fixed;
+            background-size: cover;
+            color: #ffffff;
+            padding: 2rem;
+        }
+
+        /* Lớp phủ để làm tối hình nền giúp nổi bật nội dung */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.7);
+            z-index: -1;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-weight: 800;
+            font-size: 2.5rem;
+            background: -webkit-linear-gradient(45deg, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            text-shadow: 0px 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-weight: 300;
+            font-size: 1.1rem;
+            color: #cbd5e1;
+        }
+
+        /* Thẻ thông tin sinh viên phong cách Glassmorphism */
+        .student-info {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem 2.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            animation: fadeIn 1s ease-out;
+        }
+
+        .student-info p {
+            margin: 0.5rem 0;
+            font-size: 1.05rem;
+        }
+
+        .student-info strong {
+            color: #38bdf8;
+            font-weight: 600;
+        }
+
+        .controls-instruction {
+            margin-bottom: 1.5rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(56, 189, 248, 0.15);
+            border-left: 4px solid #38bdf8;
+            border-radius: 4px;
+            font-weight: 400;
+        }
+
+        /* Khu vực chứa Video và Canvas */
+        .media-container {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        .media-card {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease;
+        }
+
+        .media-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .media-card h3 {
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+
+        video, canvas {
+            border-radius: 8px;
+            background-color: #000;
+            width: 100%;
+            max-width: 580px; /* Reduced to fit side-by-side on smaller screens */
+            height: auto;
+            aspect-ratio: 16/9;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            .media-container { flex-direction: column; align-items: center; }
+            video, canvas { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay"></div>
+
+    <header>
+        <h1>Real-time Video Edge Detection</h1>
+        <p class="subtitle">Canvas API and HTML5 Edge Detection Application</p>
+    </header>
+
+    <div class="student-info">
+        <p><strong>Student:</strong> Lê Hoàng Bách Đạt</p>
+        <p><strong>Student ID:</strong> 22127061</p>
+        <p><strong>University:</strong> VNUHCM - University of Science</p>
+    </div>
+
+    <div class="controls-instruction">
+        👉 <strong>Instruction:</strong> Press the <b>Play</b> button on the original video on the left to start the edge detection process.
+    </div>
+    
+    <div class="media-container">
+        <div class="media-card">
+            <h3>Original Video (Input)</h3>
+            <video id="myVideo" controls loop muted>
+                <source src="./video.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <div class="source-link">
+                Video source: <a href="https://www.pexels.com/video/seal-on-the-beach-1526909/" target="_blank">Pexels - Seal on the beach</a>
+            </div>
+        </div>
+        
+        <div class="media-card">
+            <h3>Realtime Edge Detection</h3>
+            <canvas id="myCanvas" width="640" height="360"></canvas>
+        </div>
+    </div>
+    <script>
+    const video = document.getElementById('myVideo');
+    const canvas = document.getElementById('myCanvas');
+    
+    // Khởi tạo context 2D 
+    const ctx = canvas.getContext('2d'); 
+
+    function render() {
+        if (video.paused || video.ended) return;
+
+        // Đồng bộ kích thước canvas với video
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 360;
+        const w = canvas.width;
+        const h = canvas.height;
+
+        // 1. Vẽ frame hiện tại của video lên canvas 
+        ctx.drawImage(video, 0, 0, w, h); 
+
+        // 2. Lấy toàn bộ mảng pixel (RGBA) của frame đó 
+        const frame = ctx.getImageData(0, 0, w, h); 
+        const data = frame.data; 
+        
+        // Tạo một mảng lưu ảnh đen trắng 
+        const gray = new Uint8Array(w * h);
+        for (let i = 0; i < data.length; i += 4) { 
+            // Công thức chuyển đổi RGB sang Grayscale
+            gray[i / 4] = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+        }
+
+        // Tạo mảng lưu dữ liệu pixel đầu ra
+        const outputData = new Uint8ClampedArray(data.length);
+
+        // 3. Áp dụng bộ lọc Sobel bằng vòng lặp for (Tính toán trên CPU)
+        for (let y = 1; y < h - 1; y++) {
+            for (let x = 1; x < w - 1; x++) {
+                const idx = y * w + x;
+
+                // Lấy giá trị của 8 pixel xung quanh pixel hiện tại (ma trận 3x3)
+                const tl = gray[idx - w - 1]; // Top-Left
+                const tc = gray[idx - w];     // Top-Center
+                const tr = gray[idx - w + 1]; // Top-Right
+                const cl = gray[idx - 1];     // Center-Left
+                const cr = gray[idx + 1];     // Center-Right
+                const bl = gray[idx + w - 1]; // Bottom-Left
+                const bc = gray[idx + w];     // Bottom-Center
+                const br = idx + w + 1 < gray.length ? gray[idx + w + 1] : 0; // Bottom-Right
+
+                // Tính toán đạo hàm theo hướng X và Y (Sobel Kernel)
+                const sobelX = (tr + 2 * cr + br) - (tl + 2 * cl + bl);
+                const sobelY = (bl + 2 * bc + br) - (tl + 2 * tc + tr);
+                
+                // Tính độ lớn của vector gradient
+                let magnitude = Math.sqrt(sobelX * sobelX + sobelY * sobelY);
+                
+                // Đặt ngưỡng 
+                magnitude = magnitude > 60 ? magnitude : 0; 
+
+                // Gán giá trị tính toán được vào mảng output
+                const outIdx = idx * 4;
+                outputData[outIdx] = magnitude;     // Red 
+                outputData[outIdx + 1] = magnitude; // Green 
+                outputData[outIdx + 2] = magnitude; // Blue 
+                outputData[outIdx + 3] = 255;       // Alpha (Độ đục 100%) 
+            }
+        }
+
+        // Ghi đè mảng output trở lại mảng data của image
+        for (let i = 0; i < data.length; i++) {
+            data[i] = outputData[i];
+        }
+
+        // 4. Đẩy hình ảnh đã xử lý ngược lại lên Canvas 
+        ctx.putImageData(frame, 0, 0); 
+
+        // Lặp lại cho khung hình tiếp theo
+        requestAnimationFrame(render);
+    }
+
+    video.addEventListener('play', () => {
+        render();
+    });
+</script>
+</body>
+</html>
