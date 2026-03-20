@@ -23,8 +23,15 @@ To detect edges, this project implements the **Sobel operator**. The step-by-ste
 4. **Thresholding:** Pixels with a magnitude above a certain threshold (e.g., 60) are highlighted, while others are suppressed. This filters out noise and results in a clear edge map.
 
 ## How to Run Locally
-If you prefer to run the project locally instead of using the web version:
-1. Clone this repository to your local machine.
-2. Ensure you have the source video file (e.g., `seal.mp4`) in the same directory as the `index.html` file to avoid CORS (Cross-Origin Resource Sharing) security issues from the browser.
-3. Open `index.html` in any modern web browser.
-4. Click play on the original video to see the edge detection process in action on the canvas.
+To avoid **CORS (Cross-Origin Resource Sharing)** issues when the browser accesses video pixel data, you should serve the project through a local server:
+
+1. **Clone this repository** to your local machine.
+2. **Open your terminal** (Command Prompt, PowerShell, or Terminal) in the project folder.
+3. **Run the local server** using Node.js (make sure you have Node.js installed):
+   ```bash
+   npx http-server .
+   ```
+4. **Access the project:** Open your browser and go to the URL provided in the terminal (usually `http://127.0.0.1:8080`).
+5. **Start processing:** Click play on the original video to see the edge detection process in action on the canvas.
+
+
